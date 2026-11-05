@@ -1,0 +1,29 @@
+---
+title: Examples
+description: Three files that wire HiveVision into a driving robot.
+---
+
+import { Code } from 'astro-expressive-code/components';
+import followerFactory from '../../../../docs/examples/SampleFollowerFactory.java?raw';
+import autoHunt from '../../../../docs/examples/AutoBallHuntOpMode.java?raw';
+import manualChase from '../../../../docs/examples/ManualBallChaseOpMode.java?raw';
+
+Drop these into `TeamCode`. Every number in them is a placeholder, so tune the constants before trusting a path on the field.
+
+## Follower
+
+Pedro Pathing 3 dropped `FollowerBuilder`. A follower is assembled from a localizer, a drivetrain and Foresight instead.
+
+<Code code={followerFactory} lang="java" meta='title="SampleFollowerFactory.java"' />
+
+## Detect, plan, drive
+
+Look once, plan one route, follow it.
+
+<Code code={autoHunt} lang="java" meta='title="AutoBallHuntOpMode.java"' />
+
+## Re-plan while driving
+
+Stays in the loop, plans again whenever the last path finishes, and bends around a zone.
+
+<Code code={manualChase} lang="java" meta='title="ManualBallChaseOpMode.java"' />

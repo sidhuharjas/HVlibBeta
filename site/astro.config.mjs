@@ -53,6 +53,7 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'Modules', slug: 'modules' },
+            { label: 'Examples', slug: 'examples' },
             { label: 'Calibration', slug: 'calibration' },
             { label: 'API', link: '/api/' },
           ],
