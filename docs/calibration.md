@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Calibration
 
 Distance and field position are computed from the camera's mounting geometry, so every value in

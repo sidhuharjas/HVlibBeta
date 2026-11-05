@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title %}{{ page.title }} &middot; {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+  <meta name="description" content="{{ site.description }}">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ '/' | relative_url }}">
+        <span class="brand-name">{{ site.title }}</span>
+        <span class="brand-tag">{{ site.description }}</span>
+      </a>
+
+      <nav class="nav">
+        {% for item in site.nav %}
+        <a class="nav-link{% if page.url == item.url %} is-active{% endif %}"
+           href="{{ item.url | relative_url }}"
+           {% if page.url == item.url %}aria-current="page"{% endif %}>{{ item.title }}</a>
+        {% endfor %}
+      </nav>
+
+      <nav class="nav nav-group">
+        <span class="nav-label">Examples</span>
+        {% for item in site.examples %}
+        <a class="nav-link" href="{{ item.url | relative_url }}">{{ item.title }}</a>
+        {% endfor %}
+      </nav>
+
+      {% if site.github.repository_url %}
+      <nav class="nav nav-group">
+        <span class="nav-label">Source</span>
+        <a class="nav-link" href="{{ site.github.repository_url }}">Repository</a>
+        <a class="nav-link" href="{{ site.github.repository_url }}/issues">Issues</a>
+      </nav>
+      {% endif %}
+    </aside>
+
+    <main class="content">
+      <article>
+        {{ content }}
+      </article>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 ---
-title: HiveVision
+title: Overview
+layout: default
 ---
 
 # HiveVision

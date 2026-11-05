@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Module reference
 
 HiveVision is two artifacts:
