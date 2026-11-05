@@ -26,5 +26,5 @@ obstacle-avoiding paths for autonomous. It knows the Biobuzz game elements (`POL
 ## Installing
 
 HiveVision is not on Maven Central yet. Build the archives with `./gradlew assembleRelease` and add
-them to your robot project's `TeamCode/libs/`. The
-[README](https://github.com/sidhuharjas/HV4test#installation) has the exact dependency lines.
+them to your robot project's `TeamCode/libs/`. The README in this repository has the exact dependency
+lines.
