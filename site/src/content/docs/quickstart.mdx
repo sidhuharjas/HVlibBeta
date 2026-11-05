@@ -1,26 +1,28 @@
 ---
 title: Quickstart
-description: Build HiveVision and read your first detections.
+description: Install HiveVision and read your first detections.
 ---
 
-## Build
-
-```bash
-./gradlew assembleRelease
-```
-
-Copy `core/build/outputs/aar/core-release.aar` and `weaver/build/outputs/aar/weaver-release.aar` into your project's `TeamCode/libs/`.
+## Install
 
 ```groovy
 dependencies {
-    implementation files('libs/core-release.aar')
-    implementation files('libs/weaver-release.aar')
+    implementation 'io.github.sidhuharjas:core:1.0.0'
+    implementation 'io.github.sidhuharjas:weaver:1.0.0'
     implementation 'com.skeletonarmyftc.marrow:core:1.2.2'
     implementation 'com.pedropathing:core:3.0.1'
 }
 ```
 
-Marrow is compiled into `weaver` but not published with it. Declare it yourself.
+Both artifacts are on Maven Central, so `mavenCentral()` in `repositories` is enough. Marrow is compiled into `weaver` but not published with it. Declare it yourself.
+
+Building from this repository instead:
+
+```bash
+./gradlew assembleRelease
+```
+
+Copy `core/build/outputs/aar/core-release.aar` and `weaver/build/outputs/aar/weaver-release.aar` into `TeamCode/libs/`.
 
 ## Construct
 

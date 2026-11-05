@@ -19,8 +19,20 @@ Camera-based detection, target filtering, field positioning, and Weaver path rou
 
 ## Installation
 
-HiveVision is **not published yet**, so `io.github.sidhuharjas:core:1.0.0` does not resolve from Maven Central.
-Build the archives from this repository and drop them into your robot project's `TeamCode/libs/`:
+```gradle
+dependencies {
+    implementation 'io.github.sidhuharjas:core:1.0.0'
+    implementation 'io.github.sidhuharjas:weaver:1.0.0' // optional, needs :core as well
+}
+```
+
+Both are on Maven Central, so `mavenCentral()` in `repositories` is enough.
+
+The AARs leave the FTC SDK out on purpose: your TeamCode module already provides it. `:weaver` also needs
+[Marrow](https://marrow.skeletonarmyftc.com/), so add
+`implementation 'com.skeletonarmyftc.marrow:core:1.2.2'` next to it (Marrow is not transitive).
+
+To build from this repository instead:
 
 ```bash
 ./gradlew assembleRelease
@@ -32,21 +44,8 @@ Build the archives from this repository and drop them into your robot project's 
 | `weaver-release.aar` | `weaver/build/outputs/aar/` (optional) |
 
 ```gradle
-dependencies {
-    implementation files('libs/core-release.aar')
-    implementation files('libs/weaver-release.aar') // optional, needs :core as well
-}
-```
-
-The AARs leave the FTC SDK out on purpose: your TeamCode module already provides it. `:weaver` also needs
-[Marrow](https://marrow.skeletonarmyftc.com/), so keep `mavenCentral()` in `repositories` and add
-`implementation 'com.skeletonarmyftc.marrow:core:1.2.2'` next to it (Marrow is not transitive).
-
-Once the artifacts are published, the plain coordinates work instead:
-
-```gradle
-implementation 'io.github.sidhuharjas:core:1.0.0'
-implementation 'io.github.sidhuharjas:weaver:1.0.0'
+implementation files('libs/core-release.aar')
+implementation files('libs/weaver-release.aar') // optional
 ```
 
 ---
