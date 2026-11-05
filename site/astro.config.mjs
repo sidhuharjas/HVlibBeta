@@ -13,6 +13,11 @@ const tagline = 'Pollen and nectar detection for FTC robots.';
 export default defineConfig({
   site: siteUrl,
   base,
+  // There is no landing page: the site root goes straight to the docs.
+  // Astro prefixes `base` to the source path but not the destination.
+  redirects: {
+    '/': `${base}/quickstart/`,
+  },
   integrations: [
     sitemap(),
     starlight({
