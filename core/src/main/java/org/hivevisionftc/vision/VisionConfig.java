@@ -4,7 +4,8 @@ package org.hivevisionftc.vision;
  * Camera mounting geometry and detection thresholds. Every setter returns {@code this}, so calls can be chained.
  *
  * <p>Distances are inches and angles are degrees. The robot frame has +X forward and +Y to the left. See
- * {@code docs/calibration.md} for how to measure each value.
+ * <a href="https://sidhuharjas.github.io/HVlibBeta/calibration/">the calibration guide</a> for how to measure each
+ * value.
  */
 public final class VisionConfig {
     private double cameraPitchDeg = 0;

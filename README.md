@@ -107,15 +107,14 @@ if (path != null) {
 
 ## Calibration
 
-Field positions come from the camera's mounting geometry, so measure it carefully. See
-[docs/calibration.md](docs/calibration.md) for the procedure, units, and coordinate conventions.
+Field positions come from the camera's mounting geometry, so measure it carefully. See the
+[calibration guide](https://sidhuharjas.github.io/HVlibBeta/calibration/) for the procedure, units, and frames.
 
 ---
 
 ## Documentation & Examples
 
-- **[MODULES.md](docs/MODULES.md)** — API reference for `:core` and `:weaver`.
-- **[calibration.md](docs/calibration.md)** — Procedure for measuring camera offsets, pitch angles, and understanding coordinate frames.
+- **[Docs site](https://sidhuharjas.github.io/HVlibBeta/)** — quickstart, module reference, calibration, and Javadoc.
 - **[weaver/README.md](weaver/README.md)** — Quick guide to using the `WeaverRoute` extension.
 - **[docs/examples/](docs/examples/)** — Sample OpModes demonstrating integration with Pedro Pathing.
 

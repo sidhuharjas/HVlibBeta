@@ -1,0 +1,45 @@
+---
+title: Calibration
+description: Measure the camera so field positions are right.
+---
+
+Distance comes from the camera's mounting geometry. A few millimeters off in height or pitch becomes inches off at range.
+
+| Method | Meaning | Units |
+|--------|---------|-------|
+| `cameraHeightIn` | Floor to the lens center | inches |
+| `targetHeightIn` | Floor to the element center | inches |
+| `cameraPitchDeg` | Tilt above horizontal. **Negative looks down.** | degrees |
+| `cameraForwardIn` | Lens ahead of robot center | inches |
+| `cameraLeftIn` | Lens left of robot center | inches |
+| `minConfidence` | Lowest confidence to keep | 0 to 1 |
+| `maxStalenessMs` | Oldest data to keep | ms |
+| `limelightPipeline` | Pipeline index from the Limelight UI | index |
+| `limelightPollingRateHz` | How often the SDK reads the camera | Hz |
+
+## Measure
+
+- **Height.** Floor to the middle of the lens. Same for the element.
+- **Pitch.** Angle gauge against the housing. Tilted 25° at the floor is `-25`.
+- **Offsets.** Robot center of rotation to the lens. Forward positive, left positive.
+
+Take the numbers from CAD, then check them on the robot.
+
+## Frames
+
+Robot frame: +X forward, +Y left. Field axes match Pedro Pathing; heading is radians counter-clockwise from +X.
+
+The camera reports `tx` (positive right) and `ty` (positive up). `FieldProjector` intersects that ray with the plane at the element's height, then the robot pose moves it into the field frame. Rays that never reach that height are dropped.
+
+## Example
+
+```java
+VisionConfig config = new VisionConfig()
+        .cameraHeightIn(9.25)
+        .targetHeightIn(3.0)
+        .cameraPitchDeg(-25.0)
+        .cameraForwardIn(4.5)
+        .cameraLeftIn(-1.2)    // 1.2" right of center
+        .minConfidence(0.40)
+        .maxStalenessMs(150);
+```

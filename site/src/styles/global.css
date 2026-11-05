@@ -1,0 +1,206 @@
+@import "tailwindcss";
+@import "@pelagornis/page/styles";
+
+:root {
+  --sl-color-bg: #000000 !important;
+  --sl-color-bg-page: #000000 !important;
+}
+
+/* Force structural Starlight layers, nested panels, and main frames to stay transparent */
+html,
+body,
+[data-template="splash"],
+.page,
+.main-frame,
+.content-panel,
+.sl-flex,
+main,
+article,
+.main-pane,
+.sidebar,
+aside,
+[class*="sidebar"],
+[class*="right-sidebar"],
+.right-sidebar {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/*
+   Permanent Static Linear Gradient Backdrop
+   This creates a smooth, fixed gradient flowing top-to-bottom across
+   the viewport, entirely independent of where your mouse moves.
+*/
+html,
+body {
+  background-color: #000000 !important;
+  background-image: linear-gradient(
+    to bottom,
+    #16161a 0%,
+    #0a0a0c 35%,
+    #000000 100%
+  ) !important;
+  background-attachment: fixed !important;
+}
+
+/*
+   --- FIX: Removed 'main' from here ---
+   We only keep the shadow on the ultra-outer layout body wrapper (.main-frame)
+   so it doesn't create a boxed rectangular shadow framing around your reading pane.
+*/
+.main-frame {
+  box-shadow: 0 0 80px 10px rgba(255, 255, 255, 0.05);
+}
+
+/* Flatten the Dual Panelled Bars and Header Layout */
+header,
+.main-frame header,
+[class*="header"],
+header *,
+.header-wrapper,
+[class*="header-wrapper"] {
+  border: none !important;
+  border-bottom: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Enhances the video containers with a distinct white depth shadow */
+.card-grid > div,
+.sl-card,
+CardGrid > div {
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.08),
+              0 1px 3px rgba(255, 255, 255, 0.15) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Adds a sleek interactive hover effect to the cards */
+.card-grid > div:hover,
+.sl-card:hover,
+CardGrid > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(255, 255, 255, 0.12),
+              0 1px 5px rgba(255, 255, 255, 0.25) !important;
+}
+
+/* --- Mask and Hide the Accessibility Skip-Link --- */
+.skip-link,
+a[href="#_top"],
+a.skip-to-content,
+[class*="skip-link"] {
+  clip: rect(1px, 1px, 1px, 1px) !important;
+  clip-path: inset(50%) !important;
+  height: 1px !important;
+  width: 1px !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  position: absolute !important;
+}
+
+/* Restores layout placement for the link if focused */
+.skip-link:focus,
+a.skip-to-content:focus {
+  clip: auto !important;
+  clip-path: none !important;
+  height: auto !important;
+  width: auto !important;
+  margin: auto !important;
+  overflow: visible !important;
+  z-index: 9999 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  padding: 1rem !important;
+}
+
+/* Hides the Starlight theme selector dropdown */
+starlight-theme-select {
+  display: none !important;
+}
+
+/* --- Honeycomb Canvas Layout --- */
+#honeycomb-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ensure sidebars, headers, cards, and text stay crisp above the canvas grid texture */
+.sidebar,
+header,
+.main-frame header,
+.sl-markdown-content,
+.card-grid,
+.sl-card,
+footer,
+h1, h2, h3, p, a, img, ul, ol, li, span, code {
+  position: relative;
+  z-index: 2;
+}
+
+/* Force hide any lingering Starlight or plugin dark/light mode toggle widgets */
+starlight-theme-select,
+.theme-toggle,
+[class*="theme-toggle"],
+button[aria-label*="theme"],
+.sl-flex button:has(svg.sun),
+.sl-flex button:has(svg.moon) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* Force primary button text to be black so it is readable on the white background */
+.sl-link-button.primary {
+  color: #000000 !important;
+}
+
+/* Optional: Smooth transition and text color swap when hovering over the button */
+.sl-link-button.primary:hover {
+  color: #ffffff !important;
+}
+/*
+   --- HOME PAGE (splash) INTEGRATION ---
+   starlight-theme-black sets `.sl-markdown-content * { font-size: 15px }`,
+   which flattens every span in the landing page (the quote's word spans and
+   the big feature headlines). Restore inheritance inside the page only.
+*/
+.hv span,
+.hv strong,
+.hv em,
+.hv b,
+.hv i,
+.hv small,
+.hv sub,
+.hv sup {
+  font-size: inherit;
+}
+
+/* The landing page ships its own hero, so Starlight's page title/description
+   header (and its "Copy page" actions) are duplicates there. */
+body:has(.hv) .page-title {
+  display: none;
+}
+
+/* Give the landing page its intended 1160px stage instead of the 1080px docs column. */
+body:has(.hv) {
+  --sl-content-width: 72.5rem;
+}
+
+body:has(.hv) .content-panel:first-of-type {
+  padding-block-start: 0;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html[data-theme='light'] {
+  color-scheme: dark;
+}

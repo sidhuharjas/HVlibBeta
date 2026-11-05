@@ -1,0 +1,69 @@
+---
+title: Quickstart
+description: Build HiveVision and read your first detections.
+---
+
+## Build
+
+```bash
+./gradlew assembleRelease
+```
+
+Copy `core/build/outputs/aar/core-release.aar` and `weaver/build/outputs/aar/weaver-release.aar` into your project's `TeamCode/libs/`.
+
+```groovy
+dependencies {
+    implementation files('libs/core-release.aar')
+    implementation files('libs/weaver-release.aar')
+    implementation 'com.skeletonarmyftc.marrow:core:1.2.2'
+    implementation 'com.pedropathing:core:3.0.1'
+}
+```
+
+Marrow is compiled into `weaver` but not published with it. Declare it yourself.
+
+## Construct
+
+```java
+Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
+limelight.pipelineSwitch(0);
+limelight.start();
+
+HiveVision vision = new HiveVision(limelight, new VisionConfig()
+        .cameraHeightIn(12.5)
+        .cameraPitchDeg(-24)
+        .targetHeightIn(3.5));
+```
+
+Those three numbers are placeholders. See [Calibration](../calibration/).
+
+## Read
+
+```java
+for (Detection d : vision.fetchDetections(follower.pose())) {
+    telemetry.addData("target", "%.1f, %.1f", d.getX(), d.getY());
+}
+```
+
+- Field inches, nearest first.
+- Empty when the robot pose is stale, confidence is low, or the class is filtered out.
+- `limelightPipeline` and `limelightPollingRateHz` apply at construction only.
+
+## Filter
+
+```java
+vision.setAllowedClasses(BiobuzzClasses.POLLEN);
+```
+
+## Plan
+
+```java
+PathResult path = WeaverRoute.from(follower.pose())
+        .avoid(new CircleZone(new Point(72, 72), 18))
+        .maxTargets(4)
+        .plan(vision.fetchDetections(follower.pose()));
+
+if (path != null) follower.follow(PedroPathingConverter.toPath(path));
+```
+
+`plan` returns `null` when there are no detections. Catch Weaver's exceptions and fall back to a plain path.
