@@ -7,7 +7,8 @@ subprojects {
     apply(plugin = "io.deepmedia.tools.deployer")
     apply(plugin = "com.diffplug.spotless")
 
-    group = "org.hivevisionftc"
+    // Verifiable through the GitHub account, which is what Central Portal checks for io.github.*.
+    group = "io.github.sidhuharjas"
     version = "1.0.0"
 
     repositories {
@@ -34,9 +35,9 @@ subprojects {
         projectInfo {
             name.set("HiveVision")
             description.set("Camera based detection and positioning library for FTC.")
-            url.set("https://github.com/hivevisionftc/Hive-Vision.git")
-            scm.fromGithub("hivevisionftc", "Hive-Vision")
-            developer("Hive Vision", "hivevisionftc@gmail.com")
+            url.set("https://sidhuharjas.github.io/HVlibBeta/")
+            scm.fromGithub("sidhuharjas", "HVlibBeta")
+            developer("Harjas S", "sidhuharjas@users.noreply.github.com")
             license(MIT)
         }
 

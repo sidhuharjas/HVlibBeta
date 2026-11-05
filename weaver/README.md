@@ -7,7 +7,7 @@ Not on Maven Central yet: build `weaver-release.aar` with `./gradlew assembleRel
 `TeamCode/libs/` (the main README covers this). Once published:
 
 ```gradle
-implementation 'org.hivevisionftc:weaver:1.0.0'   // pulls in :core and Marrow
+implementation 'io.github.sidhuharjas:weaver:1.0.0'   // pulls in :core and Marrow
 ```
 
 ```java

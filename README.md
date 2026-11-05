@@ -12,14 +12,14 @@ Camera-based detection, target filtering, field positioning, and Weaver path rou
 
 | Artifact | Description | Dependencies |
 |----------|-------------|--------------|
-| `org.hivevisionftc:core` | Perception pipeline, Limelight 3A integration, detection filtering, and camera-to-field coordinate projection. | FTC SDK, provided by your robot project |
-| `org.hivevisionftc:weaver` | Optional path routing module that converts detection lists into obstacle-avoiding [Marrow Weaver](https://marrow.skeletonarmyftc.com/) bezier paths. | `:core`, `Marrow core` |
+| `io.github.sidhuharjas:core` | Perception pipeline, Limelight 3A integration, detection filtering, and camera-to-field coordinate projection. | FTC SDK, provided by your robot project |
+| `io.github.sidhuharjas:weaver` | Optional path routing module that converts detection lists into obstacle-avoiding [Marrow Weaver](https://marrow.skeletonarmyftc.com/) bezier paths. | `:core`, `Marrow core` |
 
 ---
 
 ## Installation
 
-HiveVision is **not published yet**, so `org.hivevisionftc:core:1.0.0` does not resolve from Maven Central.
+HiveVision is **not published yet**, so `io.github.sidhuharjas:core:1.0.0` does not resolve from Maven Central.
 Build the archives from this repository and drop them into your robot project's `TeamCode/libs/`:
 
 ```bash
@@ -45,8 +45,8 @@ The AARs leave the FTC SDK out on purpose: your TeamCode module already provides
 Once the artifacts are published, the plain coordinates work instead:
 
 ```gradle
-implementation 'org.hivevisionftc:core:1.0.0'
-implementation 'org.hivevisionftc:weaver:1.0.0'
+implementation 'io.github.sidhuharjas:core:1.0.0'
+implementation 'io.github.sidhuharjas:weaver:1.0.0'
 ```
 
 ---
