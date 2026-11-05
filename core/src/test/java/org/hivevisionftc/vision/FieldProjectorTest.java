@@ -60,7 +60,8 @@ class FieldProjectorTest {
 
     @Test
     void aCameraBelowTheTargetCannotLocateIt() {
-        VisionConfig low = new VisionConfig().cameraHeightIn(2).targetHeightIn(3).cameraPitchDeg(-45);
+        VisionConfig low =
+                new VisionConfig().cameraHeightIn(2).targetHeightIn(3).cameraPitchDeg(-45);
 
         assertNull(FieldProjector.project(new Pose(0, 0, 0), low, 0, 0));
     }
