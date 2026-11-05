@@ -1,6 +1,7 @@
 package org.hivevisionftc.vision;
 
-public class Pose {
+/** An immutable 2D pose: field inches and a heading in radians (counter-clockwise from +X). */
+public final class Pose {
     private final double x;
     private final double y;
     private final double heading;
@@ -25,5 +26,15 @@ public class Pose {
 
     public double getHeading() {
         return heading;
+    }
+
+    /** Straight-line distance, in inches, from this pose to {@code other}. */
+    public double distanceTo(Pose other) {
+        return Math.hypot(other.x - x, other.y - y);
+    }
+
+    @Override
+    public String toString() {
+        return "Pose(x=" + x + ", y=" + y + ", heading=" + heading + ")";
     }
 }

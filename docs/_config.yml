@@ -1,0 +1,7 @@
+title: HiveVision
+description: Camera-based detection and Weaver path routing for FTC robots.
+theme: jekyll-theme-primer
+
+# Rewrites links like [calibration.md](calibration.md) to the .html page Pages serves.
+plugins:
+  - jekyll-relative-links

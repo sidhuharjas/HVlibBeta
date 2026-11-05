@@ -2,7 +2,7 @@
 
 Camera-based detection, target filtering, field positioning, and Weaver path routing library for FTC robots.
 
-`HiveVision` turns Limelight 3A neural network detections into absolute field coordinates and generates optimal path routes for autonomous navigation. It is built natively for FTC game elements (such as `POLLEN`, `NECTAR_RED`, `NECTAR_BLUE`) using Limelight 3A SSD detectors and integrates seamlessly with [Pedro Pathing](https://github.com/pedropathing/core) and [Marrow Weaver](https://marrow.skeletonarmyftc.com/).
+`HiveVision` turns Limelight 3A neural network detections into field coordinates and, optionally, obstacle-avoiding paths for autonomous. It knows the Biobuzz game elements (`POLLEN`, `NECTAR_RED`, `NECTAR_BLUE`) and works with [Pedro Pathing](https://github.com/pedropathing/core) and [Marrow Weaver](https://marrow.skeletonarmyftc.com/).
 
 ---
 
@@ -12,83 +12,91 @@ Camera-based detection, target filtering, field positioning, and Weaver path rou
 
 | Artifact | Description | Dependencies |
 |----------|-------------|--------------|
-| `org.hivevisionftc:core` | Perception pipeline, Limelight 3A integration, detection filtering, sorting, and camera-to-field coordinate projection. | FTC SDK (`RobotCore`, `Hardware`) |
+| `org.hivevisionftc:core` | Perception pipeline, Limelight 3A integration, detection filtering, and camera-to-field coordinate projection. | FTC SDK, provided by your robot project |
 | `org.hivevisionftc:weaver` | Optional path routing module that converts detection lists into obstacle-avoiding [Marrow Weaver](https://marrow.skeletonarmyftc.com/) bezier paths. | `:core`, `Marrow core` |
 
 ---
 
 ## Installation
 
-Add the required dependencies to your `TeamCode/build.gradle`:
+HiveVision is **not published yet**, so `org.hivevisionftc:core:1.0.0` does not resolve from Maven Central.
+Build the archives from this repository and drop them into your robot project's `TeamCode/libs/`:
+
+```bash
+./gradlew assembleRelease
+```
+
+| Archive | Location |
+|---------|----------|
+| `core-release.aar` | `core/build/outputs/aar/` |
+| `weaver-release.aar` | `weaver/build/outputs/aar/` (optional) |
 
 ```gradle
 dependencies {
-    // Core vision module
-    implementation 'org.hivevisionftc:core:1.0.0'
-
-    // Optional: Marrow Weaver route planning
-    implementation 'org.hivevisionftc:weaver:1.0.0'
+    implementation files('libs/core-release.aar')
+    implementation files('libs/weaver-release.aar') // optional, needs :core as well
 }
 ```
 
-The artifacts publish to Maven Central. Ensure `mavenCentral()` is included in your `repositories` block.
+The AARs leave the FTC SDK out on purpose: your TeamCode module already provides it. `:weaver` also needs
+[Marrow](https://marrow.skeletonarmyftc.com/), so keep `mavenCentral()` in `repositories` and add
+`implementation 'com.skeletonarmyftc.marrow:core:1.2.2'` next to it (Marrow is not transitive).
+
+Once the artifacts are published, the plain coordinates work instead:
+
+```gradle
+implementation 'org.hivevisionftc:core:1.0.0'
+implementation 'org.hivevisionftc:weaver:1.0.0'
+```
 
 ---
 
 ## Quickstart
 
-### 1. Configure and Initialize Vision
+### 1. Configure
 
 ```java
-// Define camera geometry and detection thresholds
 VisionConfig config = new VisionConfig()
-        .camPitchDeg(25.0)          // Camera tilt angle below horizontal
-        .camHeight(9.2)             // Camera lens height above floor (inches)
-        .ballHeight(3.0)            // Game element center height above floor (inches)
-        .camXOffset(4.0)            // Camera forward offset from robot center (inches)
-        .camYOffset(0.0)            // Camera left offset from robot center (inches)
-        .minConfidence(0.44)        // Minimum detection confidence threshold
-        .maxStalenessMs(120)        // Max allowed data staleness (ms)
-        .pipeline(3)                // Limelight pipeline index
-        .pollingRateHz(150);        // Camera polling rate
+        .cameraHeightIn(9.2)        // lens height above the floor
+        .targetHeightIn(3.0)        // center of the game element above the floor
+        .cameraPitchDeg(-25.0)      // negative looks down
+        .cameraForwardIn(4.0)       // lens ahead of robot center
+        .cameraLeftIn(0.0)          // lens left of robot center
+        .minConfidence(0.44)
+        .maxStalenessMs(120)
+        .limelightPipeline(3)
+        .limelightPollingRateHz(150);
 
-// Initialize Limelight source & vision session
 Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
-HiveVision vision = new HiveVision(limelight, config);
-
-// Optionally restrict allowed detection classes
-vision.setAllowedClasses(BiobuzzClasses.NECTAR_RED, BiobuzzClasses.NECTAR_BLUE);
+HiveVision vision = new HiveVision(limelight, config)
+        .setAllowedClasses(BiobuzzClasses.NECTAR_RED, BiobuzzClasses.NECTAR_BLUE);
 ```
 
-### 2. Fetch and Query Detections
+### 2. Find targets
 
 ```java
-// Fetch detections and project them to field coordinates given robot's current pose
-FieldPose robotPose = new FieldPose(follower.getPose().getX(), follower.getPose().getY(), follower.getPose().getHeading());
+// Pedro Pathing 3.x accessors; 2.x used follower.getPose().getX()
+Pose robotPose = new Pose(follower.pose().x(), follower.pose().y(), follower.pose().heading());
 
-// Query the closest detected element
-Detection target = vision.detections()
-        .fetch(robotPose)
-        .sortByDistance()
-        .getClosest();
+List<Detection> detections = vision.fetchDetections(robotPose); // nearest first
 
-if (target != null) {
-    telemetry.addData("Target Class", target.getBallClass());
-    telemetry.addData("Target Field X", target.getX());
-    telemetry.addData("Target Field Y", target.getY());
+if (!detections.isEmpty()) {
+    Detection target = detections.get(0);
+    telemetry.addData("Class", target.getType());
+    telemetry.addData("Field X", target.getX());
+    telemetry.addData("Field Y", target.getY());
 }
 ```
 
-### 3. Generate Weaver Bezier Paths (Auto Routing)
+### 3. Plan a route (optional, needs `:weaver`)
 
 ```java
-// Convert detected elements directly into an obstacle-avoiding Weaver path result
-PathResult path = vision.detections()
-        .fetch(robotPose)
-        .sortByDistance()
-        .with(WeaverRoute.fromFetchPose()
-                .avoid(new CircleZone(new Point(72, 72), 18.0)) // Add obstacle zones
-                .maxTargets(4));                                // Limit path targets
+import com.skeletonarmy.marrow.weaver.PedroPathingConverter; // Marrow, not com.pedropathing
+
+PathResult path = WeaverRoute.from(robotPose)
+        .avoid(new CircleZone(new Point(72, 72), 18.0))
+        .maxTargets(4)
+        .plan(detections);
 
 if (path != null) {
     follower.follow(PedroPathingConverter.toPath(path));
@@ -99,23 +107,14 @@ if (path != null) {
 
 ## Calibration
 
-Accurate distance estimation and field projection require proper physical measurement of your camera mounting geometry. Refer to [docs/calibration.md](docs/calibration.md) for step-by-step measurement procedures and coordinate system conventions.
-
-| Config Method | Description |
-|---------------|-------------|
-| `camPitchDeg(double)` | Downward tilt angle of the camera optic axis in degrees below horizontal. |
-| `camHeight(double)` | Distance from floor to center of camera lens (inches). |
-| `ballHeight(double)` | Distance from floor to center of target game element (inches). |
-| `camXOffset(double)` | Forward (+X) offset of camera lens relative to robot center (inches). |
-| `camYOffset(double)` | Left (+Y) offset of camera lens relative to robot center (inches, negative for right). |
-| `minConfidence(double)` | Confidence threshold for accepting detections (0.0 to 1.0). |
-| `maxStalenessMs(long)` | Maximum time in milliseconds before detection data is discarded. |
+Field positions come from the camera's mounting geometry, so measure it carefully. See
+[docs/calibration.md](docs/calibration.md) for the procedure, units, and coordinate conventions.
 
 ---
 
 ## Documentation & Examples
 
-- **[MODULES.md](docs/MODULES.md)** — Complete API and class reference for `:core` and `:weaver`.
+- **[MODULES.md](docs/MODULES.md)** — API reference for `:core` and `:weaver`.
 - **[calibration.md](docs/calibration.md)** — Procedure for measuring camera offsets, pitch angles, and understanding coordinate frames.
 - **[weaver/README.md](weaver/README.md)** — Quick guide to using the `WeaverRoute` extension.
 - **[docs/examples/](docs/examples/)** — Sample OpModes demonstrating integration with Pedro Pathing.
@@ -134,7 +133,7 @@ Accurate distance estimation and field projection require proper physical measur
 # Check code formatting
 ./gradlew spotlessCheck
 
-# Build release library archives (AARs, sources, javadocs)
+# Build release library archives (AARs only; the publish tasks also attach sources and javadocs)
 ./gradlew assembleRelease
 ```
 
@@ -149,6 +148,9 @@ Publishing uses the Deployer plugin configured in `build.gradle.kts`.
 | `./gradlew deployLocal` | Publishes artifacts to Maven Local (`~/.m2`) for testing. |
 | `./gradlew deployNexusSnapshot` | Publishes snapshot builds to Sonatype Nexus. |
 | `./gradlew deployCentralPortal` | Publishes release builds to Maven Central. |
+
+The deploy tasks need `SIGNING_KEY`, `SIGNING_PASSWORD`, `CENTRAL_PORTAL_USER`, and `CENTRAL_PORTAL_PASSWORD`
+secrets. Without them they fail during signing configuration, before anything is uploaded.
 
 ---
 

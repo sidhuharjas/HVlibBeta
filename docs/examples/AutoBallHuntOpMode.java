@@ -1,14 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.marrow.PedroPathingConverter;
 import com.skeletonarmy.marrow.weaver.PathResult;
+import com.skeletonarmy.marrow.weaver.PedroPathingConverter;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import java.util.List;
 import org.hivevisionftc.vision.BiobuzzClasses;
-import org.hivevisionftc.vision.FieldPose;
+import org.hivevisionftc.vision.Detection;
 import org.hivevisionftc.vision.HiveVision;
+import org.hivevisionftc.vision.Pose;
 import org.hivevisionftc.vision.VisionConfig;
 import org.hivevisionftc.vision.weaver.WeaverRoute;
 
@@ -25,17 +27,17 @@ public class AutoBallHuntOpMode extends LinearOpMode {
 
         // Define vision configuration parameters
         VisionConfig config = new VisionConfig()
-                .camPitchDeg(25.0)
-                .camHeight(9.2)
-                .ballHeight(3.0)
-                .camXOffset(4.0)
-                .camYOffset(0.0)
+                .cameraPitchDeg(-25.0)
+                .cameraHeightIn(9.2)
+                .targetHeightIn(3.0)
+                .cameraForwardIn(4.0)
+                .cameraLeftIn(0.0)
                 .minConfidence(0.44)
                 .maxStalenessMs(120);
 
         // Initialize HiveVision session
-        HiveVision vision = new HiveVision(limelight, config);
-        vision.setAllowedClasses(BiobuzzClasses.NECTAR_RED, BiobuzzClasses.NECTAR_BLUE);
+        HiveVision vision = new HiveVision(limelight, config)
+                .setAllowedClasses(BiobuzzClasses.NECTAR_RED, BiobuzzClasses.NECTAR_BLUE);
 
         telemetry.addData("Status", "Ready - press START");
         telemetry.update();
@@ -43,16 +45,15 @@ public class AutoBallHuntOpMode extends LinearOpMode {
 
         if (opModeIsActive()) {
             // Obtain current robot pose
-            FieldPose robotPose = new FieldPose(
-                    follower.getPose().getX(),
-                    follower.getPose().getY(),
-                    follower.getPose().getHeading());
+            // Pedro Pathing 3.x accessors; 2.x used follower.getPose().getX()
+            Pose robotPose = new Pose(
+                    follower.pose().x(),
+                    follower.pose().y(),
+                    follower.pose().heading());
 
             // Fetch detections and generate a Weaver path route
-            PathResult pathResult = vision.detections()
-                    .fetch(robotPose)
-                    .sortByDistance()
-                    .with(WeaverRoute.fromFetchPose().maxTargets(2));
+            List<Detection> detections = vision.fetchDetections(robotPose);
+            PathResult pathResult = WeaverRoute.from(robotPose).maxTargets(2).plan(detections);
 
             if (pathResult != null) {
                 follower.follow(PedroPathingConverter.toPath(pathResult));

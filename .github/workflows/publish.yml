@@ -1,0 +1,38 @@
+name: Publish to Maven Central
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # The Deployer plugin configures signing for every subproject, so these four
+      # secrets must exist even for a local publish. Without them the build fails
+      # during configuration, before anything is uploaded.
+      #   SIGNING_KEY            ASCII-armored PGP private key
+      #   SIGNING_PASSWORD       passphrase for that key
+      #   CENTRAL_PORTAL_USER    Sonatype Central Portal token user
+      #   CENTRAL_PORTAL_PASSWORD  Sonatype Central Portal token password
+      - name: Publish release to Maven Central
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          CENTRAL_PORTAL_USER: ${{ secrets.CENTRAL_PORTAL_USER }}
+          CENTRAL_PORTAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
+        run: ./gradlew deployCentralPortal

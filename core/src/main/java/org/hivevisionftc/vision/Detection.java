@@ -1,90 +1,65 @@
 package org.hivevisionftc.vision;
 
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
+/** A single detected game element, located in field coordinates. */
+public final class Detection {
+    private final Pose pose;
+    private final double tx;
+    private final double ty;
+    private final double confidence;
+    private final double area;
+    private final int classId;
 
-public class Detection {
-    private Pose pose;
-    private double tx;
-    private double ty;
-    private double confidence;
-    private double area;
-    private int classId;
-    private String className;
-
-    public Detection(Pose robotPose, VisionConfig visionConfig, double tx, double ty, double confidence, double area) {
+    /**
+     * @param pose where the element sits on the field (inches)
+     * @param tx horizontal angle from the camera crosshair to the element, in degrees (positive is right)
+     * @param ty vertical angle from the camera crosshair to the element, in degrees (positive is up)
+     * @param confidence detector confidence, from 0 to 1
+     * @param area how much of the image the element fills, as reported by the camera
+     * @param classId the detector's class id
+     */
+    public Detection(Pose pose, double tx, double ty, double confidence, double area, int classId) {
+        this.pose = pose;
         this.tx = tx;
         this.ty = ty;
         this.confidence = confidence;
         this.area = area;
-        pose = findDetectionPose(robotPose, visionConfig, tx, ty);
-        // todo - class id and class name, does visionPortal probably spits out something different... enums? idk later someone(me) problem
+        this.classId = classId;
     }
 
-    public Detection(Pose robotPose, VisionConfig visionConfig, LLResultTypes.DetectorResult detectorResult) {
-        tx = detectorResult.getTargetXDegrees();
-        ty = detectorResult.getTargetYDegrees();
-        confidence = detectorResult.getConfidence();
-        area = detectorResult.getTargetArea();
-        pose = findDetectionPose(robotPose, visionConfig, detectorResult);
-        classId = detectorResult.getClassId();
-        className = detectorResult.getClassName();
-    }
-
-
-
+    /** Field position of the element, in inches. */
     public Pose getPose() {
         return pose;
     }
 
-    public void setPose(Pose pose) {
-        this.pose = pose;
+    public double getX() {
+        return pose.getX();
+    }
+
+    public double getY() {
+        return pose.getY();
     }
 
     public double getTx() {
         return tx;
     }
 
-    public void setTx(double tx) {
-        this.tx = tx;
-    }
-
     public double getTy() {
         return ty;
-    }
-
-    public void setTy(double ty) {
-        this.ty = ty;
     }
 
     public double getConfidence() {
         return confidence;
     }
 
-    public void setConfidence(double confidence) {
-        this.confidence = confidence;
-    }
-
     public double getArea() {
         return area;
-    }
-
-    public void setArea(double area) {
-        this.area = area;
     }
 
     public int getClassId() {
         return classId;
     }
 
-    public void setClassId(int classId) {
-        this.classId = classId;
-    }
-
-    public String getClassName() {
-        return className;
-    }
-
-    public void setClassName(String className) {
-        this.className = className;
+    public BiobuzzClasses getType() {
+        return BiobuzzClasses.fromId(classId);
     }
 }

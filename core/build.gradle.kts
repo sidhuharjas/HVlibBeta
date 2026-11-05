@@ -29,9 +29,11 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
-    implementation("org.firstinspires.ftc:RobotCore:12.0.0")
-    implementation("org.firstinspires.ftc:Hardware:12.0.0")
-    implementation("androidx.annotation:annotation:1.6.0")
+    // Supplied by the robot project at runtime.
+    compileOnly("org.firstinspires.ftc:RobotCore:12.0.0")
+    compileOnly("org.firstinspires.ftc:Hardware:12.0.0")
 
+    testImplementation("org.firstinspires.ftc:RobotCore:12.0.0") { isTransitive = false }
+    testImplementation("org.firstinspires.ftc:Hardware:12.0.0") { isTransitive = false }
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
 }

@@ -9,94 +9,68 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 import org.hivevisionftc.vision.Detection;
 import org.hivevisionftc.vision.Pose;
-import org.hivevisionftc.vision.HiveVision;
 
 /**
- * Plans a Marrow Weaver route through the detections in a {@link HiveVision.DetectionList}.
- *
- * <p>Plugs into the core through {@link HiveVision.DetectionList#with(Function)}, so the chain keeps flowing
- * and the core never depends on this module:
+ * Plans a Marrow Weaver route through a list of detections.
  *
  * <pre>{@code
- * PathResult path = vision.detections()
- *         .fetch(pose)
- *         .sortByColor()
- *         .with(WeaverRoute.from(pose).avoid(new CircleZone(new Point(72, 72), 18)).maxTargets(4));
+ * List<Detection> detections = vision.fetchDetections(pose);
+ *
+ * PathResult path = WeaverRoute.from(pose)
+ *         .avoid(new CircleZone(new Point(72, 72), 18))
+ *         .maxTargets(4)
+ *         .plan(detections);
  *
  * if (path != null) follower.follow(PedroPathingConverter.toPath(path));
  * }</pre>
  *
- * <p>The list must already hold field-frame positions (that is what {@code fetch(...)} produces).
+ * <p>Detections must already be in field coordinates, which is what {@code HiveVision.fetchDetections} returns.
  */
-public final class WeaverRoute implements Function<HiveVision.DetectionList, PathResult> {
-    private Pose start;
+public final class WeaverRoute {
+    private final Pose start;
+    private final List<Zone> obstacles = new ArrayList<>();
     private Pose end;
-    private final List<Zone> obstacles;
     private int maxTargets;
-    private boolean ordered = false;
+    private boolean ordered;
 
     private WeaverRoute(Pose start) {
         this.start = start;
-        obstacles = new ArrayList<>();
     }
 
-    /** Starts the route at {@code start} (field inches, heading radians). */
+    /** Starts a route at {@code start} (field inches, heading in radians). */
     public static WeaverRoute from(Pose start) {
-        if (start == null) throw new IllegalArgumentException("start must not be null");
+        if (start == null) {
+            throw new IllegalArgumentException("start must not be null");
+        }
         return new WeaverRoute(start);
     }
 
-    /** Starts the route at the pose the list was last fetched with. */
-    public static WeaverRoute fromFetchPose() {
-        return new WeaverRoute(null);
-    }
-
-    /** Adds obstacle zones (field inches) the route must bend around. */
+    /** Adds zones, in field inches, that the route must bend around. */
     public WeaverRoute avoid(Zone... zones) {
         return avoid(Arrays.asList(zones));
     }
 
-    /**
-     * Adds obstacle zones the route must bend around.
-     *
-     * @param zone zone to avoid
-     * @return this
-     */
-    public WeaverRoute addObstacle(Zone zone) {
-        return avoid(zone);
-    }
-
-    /** Adds obstacle zones (field inches) the route must bend around. */
+    /** Adds zones, in field inches, that the route must bend around. */
     public WeaverRoute avoid(Collection<? extends Zone> zones) {
         obstacles.addAll(zones);
         return this;
     }
 
-    /** Visits at most {@code n} detections (Weaver keeps the best ones). {@code 0} or less means all of them. */
+    /** Visits at most {@code n} detections, keeping the best ones. Zero or less means no limit. */
     public WeaverRoute maxTargets(int n) {
         maxTargets = n;
         return this;
     }
 
-    /**
-     * Set path targets as ordered
-     *
-     * @return this
-     */
+    /** Visits detections in the order given instead of letting Weaver pick the cheapest order. */
     public WeaverRoute ordered() {
-        this.ordered = true;
+        ordered = true;
         return this;
     }
 
-    /**
-     * Sets the destination pose for the path.
-     *
-     * @param end the destination pose
-     * @return this
-     */
+    /** Ends the route at {@code end} instead of at the last detection. */
     public WeaverRoute end(Pose end) {
         this.end = end;
         return this;
@@ -105,63 +79,41 @@ public final class WeaverRoute implements Function<HiveVision.DetectionList, Pat
     /**
      * Plans the route.
      *
-     * @return the planned route, or {@code null} when the list has no detections to route to
-     * @throws IllegalStateException if no start was given and the list was never fetched
-     * @throws RuntimeException whatever Weaver throws for degenerate geometry; catch it if you want to fall back
+     * @param detections detections in field coordinates
+     * @return the planned route, or {@code null} if there are no detections
+     * @throws RuntimeException whatever Weaver throws for degenerate geometry; catch it to fall back
      */
-    @Override
-    public PathResult apply(HiveVision.DetectionList detections) {
-        List<Detection> found = detections.getDetections();
-        if (found.isEmpty()) return null;
-
-        if (start == null) {
-            start = detections.getRobotPose();
-        }
-
-        return plan(found, start);
-    }
-
-    /**
-     * Plans a route through already field-frame detections, without needing a {@link HiveVision.DetectionList}.
-     *
-     * @param fieldDetections detections whose {@code getX()/getY()} are field inches
-     * @param from the pose the route starts from
-     * @return the planned route, or {@code null} when there are no detections
-     * @throws IllegalStateException if {@code from} is {@code null}
-     */
-    public PathResult plan(List<Detection> fieldDetections, Pose from) {
-        if (fieldDetections.isEmpty()) return null;
-        if (from == null) {
-            throw new IllegalStateException(
-                    "No start pose: pass one to WeaverRoute.from(pose) or call fetch(...) on the list first");
+    public PathResult plan(List<Detection> detections) {
+        if (detections.isEmpty()) {
+            return null;
         }
 
         WeaverBuilder builder = Weaver.builder();
         if (ordered) {
             builder.ordered();
         }
-
         if (end != null) {
-            builder.end(new Point(end.getX(), end.getY(), end.getHeading()));
+            builder.end(toPoint(end));
         }
 
-        // Marrow treats maxTargets(0) as "no cap", so it can be passed through unconditionally.
-        return builder.start(new Point(from.getX(), from.getY(), from.getHeading()))
-                .targets(toPoints(fieldDetections))
+        // Marrow treats a maxTargets of zero or less as "no limit", so it can be passed through as-is.
+        return builder.start(toPoint(start))
+                .targets(toPoints(detections))
                 .maxTargets(maxTargets)
                 .obstacles(obstacles)
                 .generate();
     }
 
-    /** Converts one field-frame detection to a Weaver target (heading is derived from the direction of travel). */
-    public static Point toPoint(Detection detection) {
-        return new Point(detection.getX(), detection.getY());
+    /** Converts detections to Weaver targets, keeping their order. The heading follows the direction of travel. */
+    static List<Point> toPoints(Collection<Detection> detections) {
+        List<Point> points = new ArrayList<>(detections.size());
+        for (Detection detection : detections) {
+            points.add(new Point(detection.getX(), detection.getY()));
+        }
+        return points;
     }
 
-    /** Converts field-frame detections to Weaver targets, preserving order. */
-    public static List<Point> toPoints(Collection<Detection> detections) {
-        List<Point> points = new ArrayList<>(detections.size());
-        for (Detection d : detections) points.add(toPoint(d));
-        return points;
+    private static Point toPoint(Pose pose) {
+        return new Point(pose.getX(), pose.getY(), pose.getHeading());
     }
 }

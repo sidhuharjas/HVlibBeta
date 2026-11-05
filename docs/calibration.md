@@ -1,130 +1,52 @@
-# Calibration — Measuring Camera Parameters and Coordinates
+# Calibration
 
-Accurate distance estimation and field-to-robot coordinate transforms depend on correct physical measurement of camera geometry and configuration parameters in `VisionConfig`.
+Distance and field position are computed from the camera's mounting geometry, so every value in
+`VisionConfig` needs to be measured. A few millimeters of error in height or pitch becomes inches of error at range.
 
----
+| Method | Meaning | Units |
+|--------|---------|-------|
+| `cameraHeightIn` | Floor to the center of the camera lens | inches |
+| `targetHeightIn` | Floor to the center of the game element | inches |
+| `cameraPitchDeg` | Tilt of the camera above horizontal. **Negative when it looks down.** | degrees |
+| `cameraForwardIn` | Lens position ahead of the robot center (negative if behind) | inches |
+| `cameraLeftIn` | Lens position left of the robot center (negative if right) | inches |
+| `minConfidence` | Lowest detection confidence to keep (0 to 1) | |
+| `maxStalenessMs` | Oldest data to keep | milliseconds |
+| `limelightPipeline` | Detector pipeline index, as numbered in the Limelight web UI | index |
+| `limelightPollingRateHz` | How often the SDK reads the camera (1 to 250) | Hz |
 
-## Configuration Parameters (`VisionConfig`)
+`limelightPipeline` and `limelightPollingRateHz` are applied when `HiveVision` is constructed. Changing them on a
+`VisionConfig` afterwards has no effect, so set them before you build the `HiveVision`.
 
-| Method | Description | Units |
-|--------|-------------|-------|
-| `camHeight(double)` | Distance from floor to center of camera lens | Inches |
-| `ballHeight(double)` | Distance from floor to center of target game element | Inches |
-| `camPitchDeg(double)` | Camera optic axis tilt angle **below horizontal** | Degrees |
-| `camXOffset(double)` | Camera lens position **forward** of robot reference center | Inches |
-| `camYOffset(double)` | Camera lens position **left** of robot reference center (+ left, − right) | Inches |
-| `minConfidence(double)` | Minimum detection confidence score to accept | 0.0 – 1.0 |
-| `maxStalenessMs(long)` | Maximum allowed detection data age | Milliseconds |
+If the robot is modeled in CAD, take the measurements from there and check them against the real robot.
 
----
+## Measuring
 
-## Physical Measurement Procedure
+- **Height.** Measure straight up from the floor to the middle of the lens. Do the same for the game element.
+- **Pitch.** Hold a digital angle gauge against the camera housing. A camera tilted 25 degrees toward the floor is
+  `-25`.
+- **Offsets.** Measure from the robot's center of rotation to the lens. Forward is positive, left is positive.
 
-> [!TIP]
-> **Use CAD Measurements When Available:** If your robot is modeled in CAD (such as Onshape, Fusion 360, or SOLIDWORKS), pull `camHeight`, `camPitchDeg`, `camXOffset`, and `camYOffset` directly from your CAD assembly. CAD measurements are typically significantly more accurate than manual tape/ruler measurements. Be sure to double-check against the physical robot to account for tile compression, sagging, or mounting tolerances.
+## Frames
 
-### 1. Camera Height (`camHeight`)
-Measure vertically from the **floor/field mat to the center of the camera lens**.
+The robot frame has +X forward and +Y to the left. Field positions use the same axes as Pedro Pathing, with the
+robot's heading in radians counter-clockwise from +X.
 
-```text
-       CAMERA
-          ●     ← Measure to lens center
-          │
-          │ camHeight
-──────────┴────────── Floor / Mat
-```
+The camera reports `tx` (positive to the right) and `ty` (positive up) as angles from the crosshair.
+`FieldProjector` intersects that ray with the plane at the element's height, then moves the result from the robot
+frame into the field frame using the robot pose passed to `fetchDetections`.
 
-### 2. Ball Height (`ballHeight`)
-Measure vertically from the **floor/field mat to the center of the target element**.
+Elements whose ray never reaches the element's height, such as anything above the horizon, are dropped.
 
-```text
-       ●
-      /_\       ← Center of game element (half of total height)
-      │ ballHeight
-─────────── Floor / Mat
-```
-
-### 3. Camera Pitch Angle (`camPitchDeg`)
-Measure the downward tilt angle of the camera optic axis below horizontal. Place a digital protractor or angle gauge against the side of the camera housing.
-
-```text
-          Camera
-            ●
-             \
-              \  25°   ← camPitchDeg (tilt below horizontal)
-               \
-───────────────────────── Horizontal
-```
-
-### 4. Camera Mount Offsets (`camXOffset`, `camYOffset`)
-Measure from the robot's physical center (drivetrain center of rotation) to the camera lens center:
-
-```text
-                 FRONT (+X)
-                   ↑
-             Camera ●
-                   │  camXOffset (forward, +)
-                   │
-             Robot ● Center
-```
-
-- **`camXOffset`**: Forward distance from robot center to camera lens (+ forward, − backward).
-- **`camYOffset`**: Left/right distance from robot center (+ left, − right).
-
----
-
-## Coordinate Systems and Conventions
-
-`HiveVision` works across three reference frames:
-
-### 1. Robot Reference Frame
-```text
-            +Y (Strafe LEFT)
-              ↑
-              │
- -X ←--------- ROBOT ----------→ +X (Forward)
-              │
-              ↓
-            -Y (Strafe RIGHT)
-```
-
-### 2. Limelight Camera Frame (`tx`, `ty`)
-```text
-      tx < 0           tx = 0           tx > 0
-        \                |                /
-         \               |               /
-          \              |              /
-           ●─────────────●─────────────●   Camera Lens
-
-   + ty = UP,  − ty = DOWN
-```
-
-When `tx > 0`, the target is to the **right** of camera center.
-
-### 3. Field Reference Frame (Pedro Pathing Compatible)
-```text
-            +Y Field
-              ↑
-              │
- ─────────────┼─────────────→ +X Field
-            Robot
-```
-
-`DetectionList.fetch(...)` converts camera-relative angles (`tx`, `ty`) into 3D range and projects them into this 2D Field Reference Frame using the robot's pose `(x, y, heading)`.
-
----
-
-## Code Example
+## Example
 
 ```java
 VisionConfig config = new VisionConfig()
-        .camPitchDeg(25.0)      // 25 degrees tilt below horizontal
-        .camHeight(9.25)        // Camera lens is 9.25" above floor
-        .ballHeight(3.0)        // Element center is 3.0" above floor
-        .camXOffset(4.5)        // Camera mounted 4.5" forward of robot center
-        .camYOffset(-1.2)       // Camera mounted 1.2" to the right of robot center
-        .minConfidence(0.40)    // 40% minimum confidence threshold
-        .maxStalenessMs(120)    // Discard data older than 120ms
-        .pipeline(3)            // Use Limelight pipeline 3
-        .pollingRateHz(150);    // Poll at 150 Hz
+        .cameraHeightIn(9.25)
+        .targetHeightIn(3.0)
+        .cameraPitchDeg(-25.0)
+        .cameraForwardIn(4.5)
+        .cameraLeftIn(-1.2)     // 1.2" right of center
+        .minConfidence(0.40)
+        .maxStalenessMs(120);
 ```

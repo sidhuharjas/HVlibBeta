@@ -17,4 +17,4 @@ rootProject.name = "HiveVision"
 
 
 include(":core")  // Base core module, required for all other modules
-include(":weaver")  // Optional: Marrow Weaver path generation for DetectionList
+include(":weaver")  // Optional: Marrow Weaver path planning through detections

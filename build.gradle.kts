@@ -35,7 +35,7 @@ subprojects {
             name.set("HiveVision")
             description.set("Camera based detection and positioning library for FTC.")
             url.set("https://github.com/hivevisionftc/Hive-Vision.git")
-            scm.fromGithub("hivevisionftc", "Hive-Vison")
+            scm.fromGithub("hivevisionftc", "Hive-Vision")
             developer("Hive Vision", "hivevisionftc@gmail.com")
             license(MIT)
         }
